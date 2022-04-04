@@ -156,6 +156,10 @@ class SimpleGP(object):
             xpred = torch.unsqueeze(xpred, 0)
             # No difference for one item
             res = self._predict(xpred, to_return=to_return)
+            if to_return == "mean":
+                return res.squeeze(0)
+            else:
+                return (res[0].squeeze(0), res[1].squeeze(0))
         elif d == 2:
             res = self._predict(xpred, to_return=to_return)
         else:  # some reshaping trick in order
