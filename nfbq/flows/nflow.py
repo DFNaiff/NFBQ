@@ -184,6 +184,10 @@ class NormalizingFlow(torch.nn.Module):
         pdensity = logdensity(x)
         return (pdensity - qdensity).mean()
     
+    @property
+    def ndim(self):
+        return self.base_distrib.ndim
+    
     def _check_inverse(self):
         for f in self.flows:
             if not f.has_inverse:

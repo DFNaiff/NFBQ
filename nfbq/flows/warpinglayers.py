@@ -106,6 +106,35 @@ class WarpingLayer(layers.NormalizingLayer):
             raise ValueError("Variable activation_map is invalid")
 
 
+def make_warping_from_slice(slice_sizes, slice_tuples, slice_scales=None):
+    """
+
+    Parameters
+    ----------
+    slice_sizes : Tuple[int]
+        The size of slices
+    slice_tuples : Tuple[Tuple[Optional[float]]]
+        The bounds
+    slice_scales : Optional[Tuple[float]]
+        The scales
+    
+    Returns
+    -------
+    WarpingLayer
+        The corresponding warping
+
+    """
+    ndim = sum(slice_sizes)
+    slice_inds = torch.split(torch.arange(ndim), slice_sizes)
+    tuple_map = dict()
+    scales_map = dict()
+    for i, ind in enumerate(slice_inds):
+        tuple_map[ind] = slice_tuples[i]
+        if slice_scales is not None:
+            scales_map[ind] = slice_scales[i]
+    return make_warping_from_tuples(ndim, tuple_map, scales_map)
+
+
 def make_warping_from_tuples(ndim, tuple_map, scales_map=None):
     """
     Makes the warping whose indexes are warped to the function defined by
@@ -134,7 +163,10 @@ def make_warping_from_tuples(ndim, tuple_map, scales_map=None):
     activation_map = dict()
     for key, value in tuple_map.items():
         scale = scales_map.get(key, None)
-        new_key = torch.tensor(key, dtype=torch.long)
+        if not isinstance(key, torch.Tensor):
+            new_key = torch.tensor(key, dtype=torch.long)
+        else:
+            new_key = key.long()
         activation_map[new_key] = tuple_to_activation(value, scale)
     return WarpingLayer(ndim, activation_map)
     
